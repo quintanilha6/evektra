@@ -1,6 +1,6 @@
 pragma solidity >=0.6.0;
 
-/// @title Evektra Smart Contract - Contract to manage Evektra client's funds
+/// @title Evektra Smart Contract for Rinkeby network - Contract to manage Evektra client's funds
 /// @author João Quintanilha - <jquintanilha@ubiwhere.com>
 /// Last update:
 
@@ -8,11 +8,11 @@ import "./dai.sol";
 import "./Ownable.sol";
 import "./SafeMath.sol";
 
-contract Evektra is Ownable {
+contract Evektra_rinkeby is Ownable {
 
     using SafeMath for uint;
 
-    Dai public DAI_SC = Dai(0x6B175474E89094C44Da98b954EedeAC495271d0F);
+    Dai public DAI_SC = Dai(0xEE3cf07DFA5c99C859533F0E61676a990BdFbB1d);
     uint public overallBalance;
 
     mapping(address => uint256) wallet;

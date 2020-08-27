@@ -1,9 +1,8 @@
-const Evektra = artifacts.require('Evektra');
+const Evektra_rinkeby = artifacts.require('Evektra_rinkeby');
 
-// This tests will only work against a ganache-cli mainnet fork
-contract('Evektra', (accounts) => {
+contract('Evektra_rinkeby', (accounts) => {
 
-    const DAI_ADDRESS_MAINNET = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+    const DAI_ADDRESS_RINKEBY = '0xEE3cf07DFA5c99C859533F0E61676a990BdFbB1d'
     const DAI_ABI = [
         {
             "inputs": [
@@ -567,37 +566,37 @@ contract('Evektra', (accounts) => {
             "type": "function"
         }
     ]
-    const ADDRESS_WITH_DAI = '0x66c57bF505A85A74609D2C83E94Aabb26d691E1F'
+    const ADDRESS_WITH_DAI = accounts[0]
     const DEPLOYER = accounts[0]
     const RANDOM_ADDRESS_TO_TEST = accounts[2]
 
-    const DAI_CONTRACT = new web3.eth.Contract(DAI_ABI, DAI_ADDRESS_MAINNET)
-    const AMOUNT_TO_SEND_ON_TESTS = web3.utils.toWei('1', 'ether')
-    const AMOUNT_TO_SEND_ON_TESTS_SMALL = web3.utils.toWei('0.3', 'ether')
-    const AMOUNT_TO_SEND_ON_TESTS_SMALLEST = web3.utils.toWei('0.1', 'ether')
+    const DAI_CONTRACT = new web3.eth.Contract(DAI_ABI, DAI_ADDRESS_RINKEBY)
+    const AMOUNT_TO_SEND_ON_TESTS = web3.utils.toWei('0.5', 'ether')
+    const AMOUNT_TO_SEND_ON_TESTS_SMALL = web3.utils.toWei('0.03', 'ether')
+    const AMOUNT_TO_SEND_ON_TESTS_SMALLEST = web3.utils.toWei('0.01', 'ether')
 
     let evektra = null;
 
     before(async() => {
-        evektra = await Evektra.deployed();
+        evektra = await Evektra_rinkeby.deployed();
     })
 
     it('Contract is compiled + deployed', async () => {
         assert(evektra != null)
     })
 
-    it('Check owner match with accounts @ 0 (ganache-cli)', async () => {
-        const owner = await evektra.owner()
-        assert.equal(DEPLOYER, owner)
+    it('Check owner match with accounts @ 0 ', async () => {
+        const isOwner = await evektra.owners(DEPLOYER)
+        assert.isTrue(isOwner)
     })
 
-    it('Check that address of DAI from mainnet matches with staged', async () => {
+    it('Check that address of DAI from Rinkeby matches with staged', async () => {
         const daiAddress = await evektra.DAI_SC()
 
-        assert.equal(DAI_ADDRESS_MAINNET, daiAddress)
+        assert.equal(DAI_ADDRESS_RINKEBY, daiAddress)
     })
 
-    it('Send 1 DAI to Evektra', async () => {
+    it('Send 0.5 DAI to Evektra', async () => {
 
         await transferDaiToEvektra(AMOUNT_TO_SEND_ON_TESTS);
 
@@ -618,7 +617,7 @@ contract('Evektra', (accounts) => {
         assert.equal(AMOUNT_TO_SEND_ON_TESTS, balanceOfEvektra)
     })
 
-    it('Sends 0.3 DAI from evektra to a random address (map update)', async () => {
+    it('Sends 0.03 dai from evektra to a random address (map update)', async () => {
         await evektraTransfer(evektra.address, RANDOM_ADDRESS_TO_TEST, AMOUNT_TO_SEND_ON_TESTS_SMALL)
         let balanceOfRandomAddress = await evektra.balanceOf(RANDOM_ADDRESS_TO_TEST)
         let balanceOfEvektra = await evektra.balanceOf(evektra.address)
@@ -629,18 +628,41 @@ contract('Evektra', (accounts) => {
 
     })
 
-    it('Sends 0.1 DAI from a random address to evektra (map update)', async () => {
+    it('Sends 0.01 dai from a random address to evektra (map update)', async () => {
         await txToEvektra(RANDOM_ADDRESS_TO_TEST, AMOUNT_TO_SEND_ON_TESTS_SMALLEST)
 
         let balanceOfRandomAddress = await evektra.balanceOf(RANDOM_ADDRESS_TO_TEST)
-        let balanceOfEvektra = await evektra.balanceOf(evektra.address)
 
         assert.equal(AMOUNT_TO_SEND_ON_TESTS_SMALL-AMOUNT_TO_SEND_ON_TESTS_SMALLEST, balanceOfRandomAddress)
-        assert.equal(web3.utils.toWei('0.8', 'ether'), balanceOfEvektra)
-
     })
 
+    it('Adds ownership to another address', async () => {
+        await addOwnership(accounts[4])
 
+        let isOwner = await evektra.owners(accounts[4])
+
+        assert.isTrue(isOwner)
+    })
+
+    it('Transfer ownership to another address', async () => {
+        await transferOwnership(RANDOM_ADDRESS_TO_TEST)
+
+        let isNotOwner = await evektra.owners(DEPLOYER)
+        let isOwner = await evektra.owners(RANDOM_ADDRESS_TO_TEST)
+
+        assert.isFalse(isNotOwner)
+        assert.isTrue(isOwner)
+    })
+
+    it('Renounce ownership', async () => {
+        await renounceOwnership()
+
+        let isOwner = await evektra.owners(RANDOM_ADDRESS_TO_TEST)
+
+        assert.isFalse(isOwner)
+    })
+
+    // This only works because we unlock the ADDRESS_WITH_DAI acount when running the network
     async function transferDaiToEvektra(wad){
         await DAI_CONTRACT.methods.transfer(evektra.address, wad).send({
             from: ADDRESS_WITH_DAI
@@ -657,6 +679,18 @@ contract('Evektra', (accounts) => {
 
     async function txToEvektra(from, wad){
         await evektra.transferToEvektra(from, wad, {from: DEPLOYER})
+    }
+
+    async function addOwnership(newOwner){
+        await evektra.addOwnership(newOwner, {from: DEPLOYER})
+    }
+
+    async function renounceOwnership(){
+        await evektra.renounceOwnership({from: RANDOM_ADDRESS_TO_TEST})
+    }
+
+    async function transferOwnership(newOwner){
+        await evektra.transferOwnership(newOwner, {from: DEPLOYER})
     }
 })
 

@@ -1,0 +1,25 @@
+{
+  "name": "smart-contracts",
+  "version": "1.0.0",
+  "description": "This README would normally document whatever steps are necessary to get your application up and running.",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://jquintanilha@bitbucket.org/evektra/smart-contracts.git"
+  },
+  "author": "João Quintanilha",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/evektra/smart-contracts#readme",
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.0.42",
+    "ganache-cli": "^6.10.1",
+    "truffle": "^5.1.41",
+    "web3": "^1.2.11"
+  }
+}
